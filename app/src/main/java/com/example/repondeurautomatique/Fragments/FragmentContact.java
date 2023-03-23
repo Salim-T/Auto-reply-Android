@@ -1,9 +1,14 @@
 package com.example.repondeurautomatique.Fragments;
 
+import android.annotation.SuppressLint;
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,61 +18,53 @@ import com.example.repondeurautomatique.R;
 import java.util.ArrayList;
 
 import android.provider.ContactsContract;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link FragmentContact#newInstance} factory method to
+ * Use the {@link FragmentContact} factory method to
  * create an instance of this fragment.
  */
 public class FragmentContact extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private TextView listContact;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    ArrayList<String> contactDataset;
+    //private ArrayAdapter<String> arrayAdapter;
 
     public FragmentContact() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentContact.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static FragmentContact newInstance(String param1, String param2) {
-        FragmentContact fragment = new FragmentContact();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_contact, container, false);
+        View result = inflater.inflate(R.layout.fragment_contact, container, false);
 
+        listContact = result.findViewById(R.id.listContact);
+        getContacts();
+        return result;
+    }
+
+    /**
+     * Recupere les contacts
+     */
+    public void getContacts(){
+        ContentResolver contentResolver = this.getActivity().getContentResolver();
+        Cursor cursor = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_ALTERNATIVE, ContactsContract.CommonDataKinds.Phone.NUMBER},null,null,null);
+        if(cursor == null){
+            Log.d("Contacts", "error cursor");
+        }else{
+            while(cursor.moveToNext()){
+                @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_ALTERNATIVE));
+                @SuppressLint("Range") String number = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                //Affichage de la liste de contact
+                listContact.setText(listContact.getText().toString() + "\n\r" + name + " : " + number);
+            }
+            cursor.close();
+        }
     }
 }
