@@ -10,6 +10,10 @@ import android.view.ViewGroup;
 
 import com.example.repondeurautomatique.R;
 
+import java.util.ArrayList;
+
+import android.provider.ContactsContract;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link FragmentContact#newInstance} factory method to
@@ -25,6 +29,8 @@ public class FragmentContact extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    ArrayList<String> contactDataset;
 
     public FragmentContact() {
         // Required empty public constructor
