@@ -5,29 +5,22 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.example.repondeurautomatique.MainActivity;
-import com.example.repondeurautomatique.R;
-
-import java.util.ArrayList;
-
-import android.provider.ContactsContract;
 import android.widget.ArrayAdapter;
-import android.widget.TextView;
+import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
+import com.example.repondeurautomatique.R;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -35,7 +28,8 @@ import android.widget.Toast;
  * create an instance of this fragment.
  */
 public class FragmentContact extends Fragment {
-    private TextView listContact;
+
+    private ArrayAdapter<String> mAdapter;
 
     public FragmentContact() {
         // Required empty public constructor
@@ -47,36 +41,47 @@ public class FragmentContact extends Fragment {
         // Inflate the layout for this fragment
         View result = inflater.inflate(R.layout.fragment_contact, container, false);
 
-        listContact = result.findViewById(R.id.listContact);
+        ListView listContact = result.findViewById(R.id.listContact);
+
+        mAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_multiple_choice);
+
+        listContact.setAdapter(mAdapter);
+
+        listContact.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
         showContacts();
+
         return result;
     }
 
     /**
-     * Recupere les contacts
+     * Get all phone contacts
      */
     public void getContacts(){
-        ContentResolver contentResolver = this.getActivity().getContentResolver();
+        ContentResolver contentResolver = this.requireActivity().getContentResolver();
         Cursor cursor = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_ALTERNATIVE, ContactsContract.CommonDataKinds.Phone.NUMBER},null,null,null);
-        if(cursor == null){
+        if(cursor == null && cursor.getCount() <= 0){
             Log.d("Contacts", "error cursor");
         }else{
             while(cursor.moveToNext()){
                 @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_ALTERNATIVE));
                 @SuppressLint("Range") String number = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                //Affichage de la liste de contact
-                listContact.setText(listContact.getText().toString() + "\n\r" + name + " : " + number);
+                //Add contact in Adapter
+                mAdapter.add(name + " : " + number);
             }
             cursor.close();
         }
     }
 
-    private ActivityResultLauncher<String> requestPermissionLauncher =
+    /**
+     * Check permission
+     */
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
                     // Permission is granted. Continue the action or workflow in your
                     // app.
-                    getContacts();
+                    showContacts();
                 } else {
                     // Explain to the user that the feature is unavailable because the
                     // feature requires a permission that the user has denied. At the
@@ -87,12 +92,17 @@ public class FragmentContact extends Fragment {
                 }
             });
 
+    /**
+     *display phone contacts
+     */
     public void showContacts(){
         if (ContextCompat.checkSelfPermission(
-                getContext(), Manifest.permission.READ_CONTACTS) ==
+                requireContext(), Manifest.permission.READ_CONTACTS) ==
                 PackageManager.PERMISSION_GRANTED) {
             // You can use the API that requires the permission.
+
             getContacts();
+
         }
         else{
             requestPermissionLauncher.launch(Manifest.permission.READ_CONTACTS);
